@@ -23,32 +23,16 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install Android Build Tools 33.0.2 & Platform
-        run: |
-          yes | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2" "platforms;android-33"
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
-      - name: Setup Gradle 8.4 Binary
+      - name: Build Android APK with Gradle
         run: |
-          wget -q https://services.gradle.org/distributions/gradle-8.4-bin.zip
-          sudo unzip -q gradle-8.4-bin.zip -d /opt
-          sudo ln -sf /opt/gradle-8.4/bin/gradle /usr/local/bin/gradle
-          sudo ln -sf /opt/gradle-8.4/bin/gradle /usr/bin/gradle
-          gradle -v
-
-      - name: Install Cordova CLI
-        run: npm install -g cordova@12.0.0
-
-      - name: Build Android APK
-        env:
-          CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: "https://services.gradle.org/distributions/gradle-8.4-bin.zip"
-        run: |
-          cd mobile_app
-          cordova platform add android@12.0.1
-          cordova plugin add https://github.com/don/BluetoothSerial.git
-          cordova build android --debug
+          cd android
+          gradle assembleDebug
 
       - name: Prepare APK File
-        run: cp mobile_app/platforms/android/app/build/outputs/apk/debug/app-debug.apk ./MarsRover-HC05-Control.apk
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk ./MarsRover-HC05-Control.apk
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
