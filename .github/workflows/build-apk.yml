@@ -27,23 +27,15 @@ jobs:
         run: |
           yes | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2" "platforms;android-33"
 
-      - name: Download & Install Gradle 8.4
-        run: |
-          wget -q https://services.gradle.org/distributions/gradle-8.4-bin.zip
-          sudo unzip -q gradle-8.4-bin.zip -d /opt
-          echo "/opt/gradle-8.4/bin" >> $GITHUB_PATH
-
       - name: Install Cordova CLI
         run: npm install -g cordova@12.0.0
 
       - name: Build Android APK
-        env:
-          CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: "https://services.gradle.org/distributions/gradle-8.4-bin.zip"
         run: |
-          export PATH="/opt/gradle-8.4/bin:$PATH"
           cd mobile_app
           cordova platform add android@12.0.1
           cordova plugin add https://github.com/don/BluetoothSerial.git
+          find platforms/android -name "*.gradle" -exec sed -i 's/new XmlParser/new groovy.xml.XmlParser/g' {} +
           cordova build android --debug
 
       - name: Prepare APK File
