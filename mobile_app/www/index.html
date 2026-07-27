@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mars Rover Native Android App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script type="text/javascript" src="cordova.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #0B0E14;
+            --card-bg: #161B26;
+            --card-border: #242B3D;
+            --accent-cyan: #00E5FF;
+            --accent-red: #FF1744;
+            --accent-green: #00E676;
+            --accent-yellow: #FFC400;
+            --accent-purple: #D500F9;
+            --text-primary: #FFFFFF;
+            --text-secondary: #94A3B8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            overflow-x: hidden;
+        }
+
+        header {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 12px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            margin-bottom: 12px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-title h1 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00E5FF, #D500F9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(255, 23, 68, 0.15);
+            color: var(--accent-red);
+            border: 1px solid rgba(255, 23, 68, 0.3);
+            text-transform: uppercase;
+        }
+
+        .status-badge.connected {
+            background: rgba(0, 230, 118, 0.15);
+            color: var(--accent-green);
+            border-color: rgba(0, 230, 118, 0.3);
+        }
+
+        .device-selector {
+            display: flex;
+            gap: 8px;
+        }
+
+        select {
+            flex: 1;
+            background: #0B0E14;
+            color: #FFFFFF;
+            border: 1px solid var(--card-border);
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+        }
+
+        .connect-btn {
+            background: linear-gradient(135deg, #00E5FF, #00B0FF);
+            color: #000000;
+            border: none;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 800;
+            padding: 8px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .connect-btn.disconnect {
+            background: linear-gradient(135deg, #FF1744, #D50000);
+            color: #FFFFFF;
+        }
+
+        /* Telemetry Grid */
+        .telemetry-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .card-value {
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin-top: 4px;
+        }
+
+        .temp-val { color: #FF5252; }
+        .hum-val { color: var(--accent-cyan); }
+        .air-val { color: var(--accent-yellow); }
+        .turb-val { color: var(--accent-purple); }
+        .tds-val { color: var(--accent-green); }
+        .state-val { color: #FF9100; font-size: 1.1rem; }
+
+        .card-subtext {
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-top: 4px;
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* D-Pad Controller Section */
+        .controller-section {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .section-header {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .dpad-container {
+            display: grid;
+            grid-template-columns: repeat(3, 72px);
+            grid-template-rows: repeat(3, 72px);
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .dpad-btn {
+            background: var(--card-border);
+            border: 2px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            color: var(--accent-cyan);
+            font-size: 1rem;
+            font-weight: 800;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .dpad-btn span {
+            font-size: 0.65rem;
+            margin-top: 2px;
+            font-weight: 700;
+        }
+
+        .dpad-btn:active, .dpad-btn.active {
+            background: var(--accent-cyan);
+            color: #000000;
+            transform: scale(0.92);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.6);
+        }
+
+        .dpad-stop {
+            background: var(--accent-red);
+            color: #FFFFFF;
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        .dpad-stop:active, .dpad-stop.active {
+            background: #D50000;
+        }
+
+        .dpad-up { grid-column: 2; grid-row: 1; }
+        .dpad-left { grid-column: 1; grid-row: 2; }
+        .dpad-right { grid-column: 3; grid-row: 2; }
+        .dpad-down { grid-column: 2; grid-row: 3; }
+
+        /* Terminal Console */
+        .terminal-section {
+            background: #080B10;
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100px;
+        }
+
+        .terminal-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .terminal-body {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--accent-green);
+            overflow-y: auto;
+            max-height: 100px;
+            flex: 1;
+            word-break: break-all;
+        }
+
+        .log-line { margin-bottom: 2px; }
+        .log-tx { color: var(--accent-cyan); }
+        .log-rx { color: var(--accent-green); }
+        .log-err { color: var(--accent-red); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-top">
+            <div class="header-title">
+                <span>🔴</span>
+                <h1>MARS ROVER APK</h1>
+            </div>
+            <div id="statusBadge" class="status-badge">Disconnected</div>
+        </div>
+
+        <div class="device-selector">
+            <select id="deviceList">
+                <option value="">Select HC-05 Device...</option>
+            </select>
+            <button id="connectBtn" class="connect-btn">CONNECT</button>
+        </div>
+    </header>
+
+    <div class="telemetry-grid">
+        <div class="card">
+            <div class="card-title">🌡️ Temp</div>
+            <div id="tempVal" class="card-value temp-val">-- °C</div>
+        </div>
+        <div class="card">
+            <div class="card-title">💧 Humidity</div>
+            <div id="humVal" class="card-value hum-val">-- %</div>
+        </div>
+        <div class="card">
+            <div class="card-title">💨 Air (MQ135)</div>
+            <div id="mqVal" class="card-value air-val">--</div>
+            <div id="airRating" class="card-subtext" style="color:#FFC400">UNKNOWN</div>
+        </div>
+        <div class="card">
+            <div class="card-title">🌊 Turbidity</div>
+            <div id="turbVal" class="card-value turb-val">--</div>
+        </div>
+        <div class="card">
+            <div class="card-title">🧪 Water TDS</div>
+            <div id="tdsVal" class="card-value tds-val">--</div>
+        </div>
+        <div class="card">
+            <div class="card-title">🛸 State</div>
+            <div id="stateVal" class="card-value state-val">STOPPED</div>
+        </div>
+    </div>
+
+    <div class="controller-section">
+        <div class="section-header">🎮 Mobility Control (Hold to Move)</div>
+        <div class="dpad-container">
+            <button id="btnUp" class="dpad-btn dpad-up">▲<span>FORWARD</span></button>
+            <button id="btnLeft" class="dpad-btn dpad-left">◄<span>LEFT</span></button>
+            <button id="btnStop" class="dpad-btn dpad-stop">█<span>STOP</span></button>
+            <button id="btnRight" class="dpad-btn dpad-right">►<span>RIGHT</span></button>
+            <button id="btnDown" class="dpad-btn dpad-down">▼<span>REVERSE</span></button>
+        </div>
+    </div>
+
+    <div class="terminal-section">
+        <div class="terminal-title">📜 NATIVE BLUETOOTH SPP CONSOLE</div>
+        <div id="terminalBody" class="terminal-body">
+            <div class="log-line">App initialized. Select HC-05 and tap CONNECT.</div>
+        </div>
+    </div>
+
+    <script>
+        let isConnected = false;
+        let connectedAddress = null;
+
+        const deviceList = document.getElementById('deviceList');
+        const connectBtn = document.getElementById('connectBtn');
+        const statusBadge = document.getElementById('statusBadge');
+        const terminalBody = document.getElementById('terminalBody');
+
+        const tempVal = document.getElementById('tempVal');
+        const humVal = document.getElementById('humVal');
+        const mqVal = document.getElementById('mqVal');
+        const airRating = document.getElementById('airRating');
+        const turbVal = document.getElementById('turbVal');
+        const tdsVal = document.getElementById('tdsVal');
+        const stateVal = document.getElementById('stateVal');
+
+        function log(msg, type = 'normal') {
+            const line = document.createElement('div');
+            line.className = `log-line log-${type}`;
+            line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            terminalBody.appendChild(line);
+            terminalBody.scrollTop = terminalBody.scrollHeight;
+        }
+
+        document.addEventListener('deviceready', onDeviceReady, false);
+
+        function onDeviceReady() {
+            log('Cordova Native Device Ready!', 'rx');
+            refreshPairedDevices();
+        }
+
+        function refreshPairedDevices() {
+            if (typeof bluetoothSerial === 'undefined') {
+                log('bluetoothSerial plugin missing (Running in browser mode?)', 'err');
+                return;
+            }
+
+            bluetoothSerial.list((devices) => {
+                deviceList.innerHTML = '<option value="">Select HC-05 Device...</option>';
+                devices.forEach((dev) => {
+                    const opt = document.createElement('option');
+                    opt.value = dev.address;
+                    opt.textContent = `${dev.name || 'Unknown'} (${dev.address})`;
+                    if (dev.name && dev.name.includes('HC-05')) {
+                        opt.selected = true;
+                    }
+                    deviceList.appendChild(opt);
+                });
+                log(`Found ${devices.length} paired Bluetooth devices.`, 'rx');
+            }, (err) => {
+                log(`Error listing Bluetooth devices: ${err}`, 'err');
+            });
+        }
+
+        connectBtn.addEventListener('click', () => {
+            if (isConnected) {
+                disconnectRover();
+            } else {
+                const mac = deviceList.value;
+                if (!mac) {
+                    alert('Please select your HC-05 Bluetooth device from the dropdown!');
+                    return;
+                }
+                connectRover(mac);
+            }
+        });
+
+        function connectRover(mac) {
+            log(`Connecting to HC-05 [${mac}]...`, 'normal');
+            bluetoothSerial.connect(mac, () => {
+                isConnected = true;
+                connectedAddress = mac;
+                connectBtn.textContent = 'DISCONNECT';
+                connectBtn.classList.add('disconnect');
+                statusBadge.textContent = 'Connected';
+                statusBadge.classList.add('connected');
+                log('Successfully connected to HC-05 Bluetooth!', 'rx');
+
+                // Subscribe to incoming telemetry lines from Arduino
+                bluetoothSerial.subscribe('\n', handleIncomingLine, (err) => log(`Subscribe Error: ${err}`, 'err'));
+            }, (err) => {
+                log(`Connection Failed: ${err}`, 'err');
+                alert(`Could not connect to HC-05: ${err}`);
+            });
+        }
+
+        function disconnectRover() {
+            if (typeof bluetoothSerial !== 'undefined') {
+                bluetoothSerial.disconnect();
+            }
+            isConnected = false;
+            connectBtn.textContent = 'CONNECT';
+            connectBtn.classList.remove('disconnect');
+            statusBadge.textContent = 'Disconnected';
+            statusBadge.classList.remove('connected');
+            log('Disconnected from Bluetooth.', 'err');
+        }
+
+        function sendCommand(cmd) {
+            log(`TX -> '${cmd}'`, 'tx');
+            stateVal.textContent = getCmdText(cmd);
+
+            if (navigator.vibrate) {
+                navigator.vibrate(30);
+            }
+
+            if (isConnected && typeof bluetoothSerial !== 'undefined') {
+                bluetoothSerial.write(cmd, () => {}, (err) => log(`TX Fail: ${err}`, 'err'));
+            }
+        }
+
+        function getCmdText(cmd) {
+            switch(cmd) {
+                case 'F': return 'FORWARD';
+                case 'B': return 'REVERSE';
+                case 'L': return 'TURN LEFT';
+                case 'R': return 'TURN RIGHT';
+                case 'S': return 'STOPPED';
+                default: return cmd;
+            }
+        }
+
+        function handleIncomingLine(data) {
+            const text = data.trim();
+            if (!text) return;
+            log(`RX <- ${text}`, 'rx');
+
+            if (text.includes("Temperature :")) {
+                tempVal.textContent = text.split(":")[1].trim();
+            } else if (text.includes("Humidity :")) {
+                humVal.textContent = text.split(":")[1].trim();
+            } else if (text.includes("MQ135 :")) {
+                const val = text.split(":")[1].trim();
+                mqVal.textContent = val;
+                const num = parseInt(val);
+                if (!isNaN(num)) {
+                    if (num < 300) { airRating.textContent = 'GOOD'; airRating.style.color = '#00E676'; }
+                    else if (num < 600) { airRating.textContent = 'MODERATE'; airRating.style.color = '#FFC400'; }
+                    else { airRating.textContent = 'POOR'; airRating.style.color = '#FF1744'; }
+                }
+            } else if (text.includes("Turbidity :")) {
+                turbVal.textContent = text.split(":")[1].trim();
+            } else if (text.includes("TDS :")) {
+                tdsVal.textContent = text.split(":")[1].trim();
+            }
+        }
+
+        // Setup Touch Hold-to-Move D-Pad Controls
+        function setupHoldButton(btnId, moveCmd) {
+            const btn = document.getElementById(btnId);
+            let active = false;
+
+            const startMove = (e) => {
+                e.preventDefault();
+                if (!active) {
+                    active = true;
+                    btn.classList.add('active');
+                    sendCommand(moveCmd);
+                }
+            };
+
+            const stopMove = (e) => {
+                e.preventDefault();
+                if (active) {
+                    active = false;
+                    btn.classList.remove('active');
+                    sendCommand('S');
+                }
+            };
+
+            btn.addEventListener('touchstart', startMove, { passive: false });
+            btn.addEventListener('touchend', stopMove, { passive: false });
+            btn.addEventListener('touchcancel', stopMove, { passive: false });
+
+            btn.addEventListener('mousedown', startMove);
+            btn.addEventListener('mouseup', stopMove);
+            btn.addEventListener('mouseleave', stopMove);
+        }
+
+        setupHoldButton('btnUp', 'F');
+        setupHoldButton('btnLeft', 'L');
+        setupHoldButton('btnDown', 'B');
+        setupHoldButton('btnRight', 'R');
+
+        document.getElementById('btnStop').addEventListener('click', () => sendCommand('S'));
+    </script>
+</body>
+</html>

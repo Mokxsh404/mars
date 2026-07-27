@@ -1,0 +1,27 @@
+{
+  "name": "com.moksh.marsrover",
+  "displayName": "Mars Rover",
+  "version": "1.0.0",
+  "description": "Native Android Bluetooth SPP Controller for Mars Rover",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ecosystem:cordova"
+  ],
+  "author": "Moksh",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "cordova-android": "^12.0.1",
+    "cordova-plugin-bluetooth-serial": "^0.4.8"
+  },
+  "cordova": {
+    "plugins": {
+      "cordova-plugin-bluetooth-serial": {}
+    },
+    "platforms": [
+      "android"
+    ]
+  }
+}
