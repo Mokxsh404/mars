@@ -1,0 +1,17 @@
+{
+  "name": "Mars Rover Mobile Mission Control",
+  "short_name": "Mars Rover",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0B0E14",
+  "theme_color": "#0B0E14",
+  "orientation": "portrait",
+  "description": "Wireless Bluetooth Mobile Dashboard and Hold-to-Move Controller for Mars Environmental Rover",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2590/2590525.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

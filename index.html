@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mars Rover Mobile Controller</title>
+    <meta name="theme-color" content="#0B0E14">
+    <meta name="description" content="Mobile Bluetooth Controller and Telemetry Dashboard for Mars Rover">
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #0B0E14;
+            --card-bg: #161B26;
+            --card-border: #242B3D;
+            --accent-cyan: #00E5FF;
+            --accent-red: #FF1744;
+            --accent-green: #00E676;
+            --accent-yellow: #FFC400;
+            --accent-purple: #D500F9;
+            --text-primary: #FFFFFF;
+            --text-secondary: #94A3B8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            overflow-x: hidden;
+        }
+
+        /* App Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            margin-bottom: 12px;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-title h1 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00E5FF, #D500F9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 0.5px;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(255, 23, 68, 0.15);
+            color: var(--accent-red);
+            border: 1px solid rgba(255, 23, 68, 0.3);
+            text-transform: uppercase;
+        }
+
+        .status-badge.connected {
+            background: rgba(0, 230, 118, 0.15);
+            color: var(--accent-green);
+            border-color: rgba(0, 230, 118, 0.3);
+        }
+
+        .connect-btn {
+            background: linear-gradient(135deg, #00E5FF, #00B0FF);
+            color: #000000;
+            border: none;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 800;
+            padding: 8px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 229, 255, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .connect-btn:active {
+            transform: scale(0.95);
+        }
+
+        .connect-btn.disconnect {
+            background: linear-gradient(135deg, #FF1744, #D50000);
+            color: #FFFFFF;
+            box-shadow: 0 4px 12px rgba(255, 23, 68, 0.3);
+        }
+
+        /* Telemetry Cards Grid */
+        .telemetry-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .card-value {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .temp-val { color: #FF5252; }
+        .hum-val { color: var(--accent-cyan); }
+        .air-val { color: var(--accent-yellow); }
+        .turb-val { color: var(--accent-purple); }
+        .tds-val { color: var(--accent-green); }
+        .state-val { color: #FF9100; font-size: 1.1rem; }
+
+        .card-subtext {
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-top: 4px;
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* D-Pad Controller Section */
+        .controller-section {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 12px;
+            touch-action: manipulation;
+        }
+
+        .section-header {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 12px;
+        }
+
+        .dpad-container {
+            display: grid;
+            grid-template-columns: repeat(3, 72px);
+            grid-template-rows: repeat(3, 72px);
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .dpad-btn {
+            background: var(--card-border);
+            border: 2px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            color: var(--accent-cyan);
+            font-size: 1rem;
+            font-weight: 800;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s, border-color 0.15s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .dpad-btn span {
+            font-size: 0.65rem;
+            margin-top: 2px;
+            font-weight: 700;
+        }
+
+        .dpad-btn:active, .dpad-btn.active {
+            background: var(--accent-cyan);
+            color: #000000;
+            border-color: #FFFFFF;
+            transform: scale(0.92);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.6);
+        }
+
+        .dpad-stop {
+            background: var(--accent-red);
+            color: #FFFFFF;
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        .dpad-stop:active, .dpad-stop.active {
+            background: #D50000;
+            color: #FFFFFF;
+            box-shadow: 0 0 15px rgba(255, 23, 68, 0.6);
+        }
+
+        .dpad-up { grid-column: 2; grid-row: 1; }
+        .dpad-left { grid-column: 1; grid-row: 2; }
+        .dpad-right { grid-column: 3; grid-row: 2; }
+        .dpad-down { grid-column: 2; grid-row: 3; }
+
+        /* Live Terminal Console */
+        .terminal-section {
+            background: #080B10;
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 120px;
+        }
+
+        .terminal-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .terminal-body {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--accent-green);
+            overflow-y: auto;
+            max-height: 120px;
+            flex: 1;
+            word-break: break-all;
+        }
+
+        .log-line {
+            margin-bottom: 2px;
+        }
+
+        .log-tx { color: var(--accent-cyan); }
+        .log-rx { color: var(--accent-green); }
+        .log-err { color: var(--accent-red); }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">
+            <span>🔴</span>
+            <h1>MARS ROVER</h1>
+        </div>
+        <div id="statusBadge" class="status-badge">Disconnected</div>
+        <button id="connectBtn" class="connect-btn">CONNECT</button>
+    </header>
+
+    <!-- Telemetry Data Cards -->
+    <div class="telemetry-grid">
+        <div class="card">
+            <div class="card-title">🌡️ Temp</div>
+            <div id="tempVal" class="card-value temp-val">-- °C</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">💧 Humidity</div>
+            <div id="humVal" class="card-value hum-val">-- %</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">💨 Air (MQ135)</div>
+            <div id="mqVal" class="card-value air-val">--</div>
+            <div id="airRating" class="card-subtext" style="color:#FFC400">UNKNOWN</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">🌊 Turbidity</div>
+            <div id="turbVal" class="card-value turb-val">--</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">🧪 Water TDS</div>
+            <div id="tdsVal" class="card-value tds-val">--</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">🛸 State</div>
+            <div id="stateVal" class="card-value state-val">STOPPED</div>
+        </div>
+    </div>
+
+    <!-- Hold-to-Move D-Pad Controller -->
+    <div class="controller-section">
+        <div class="section-header">🎮 Mobility Control (Hold to Move)</div>
+        <div class="dpad-container">
+            <button id="btnUp" class="dpad-btn dpad-up">▲<span>FORWARD</span></button>
+            <button id="btnLeft" class="dpad-btn dpad-left">◄<span>LEFT</span></button>
+            <button id="btnStop" class="dpad-btn dpad-stop">█<span>STOP</span></button>
+            <button id="btnRight" class="dpad-btn dpad-right">►<span>RIGHT</span></button>
+            <button id="btnDown" class="dpad-btn dpad-down">▼<span>REVERSE</span></button>
+        </div>
+    </div>
+
+    <!-- Live Data Console -->
+    <div class="terminal-section">
+        <div class="terminal-title">📜 LIVE TELEMETRY CONSOLE</div>
+        <div id="terminalBody" class="terminal-body">
+            <div class="log-line">App initialized. Tap CONNECT to pair with HC-05 Bluetooth.</div>
+        </div>
+    </div>
+
+    <script>
+        // Web Bluetooth State & Elements
+        let bluetoothDevice = null;
+        let gattServer = null;
+        let rxCharacteristic = null;
+        let txCharacteristic = null;
+        let isConnected = false;
+
+        const connectBtn = document.getElementById('connectBtn');
+        const statusBadge = document.getElementById('statusBadge');
+        const terminalBody = document.getElementById('terminalBody');
+
+        const tempVal = document.getElementById('tempVal');
+        const humVal = document.getElementById('humVal');
+        const mqVal = document.getElementById('mqVal');
+        const airRating = document.getElementById('airRating');
+        const turbVal = document.getElementById('turbVal');
+        const tdsVal = document.getElementById('tdsVal');
+        const stateVal = document.getElementById('stateVal');
+
+        // Bluetooth UUIDs for standard Serial Port / HC-05 / BLE Serial
+        const SPP_SERVICE_UUID = '00001101-0000-1000-8000-00805f9b34fb'; 
+        const NUS_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+        const NUS_RX_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+        const NUS_TX_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+
+        function log(msg, type = 'normal') {
+            const line = document.createElement('div');
+            line.className = `log-line log-${type}`;
+            line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            terminalBody.appendChild(line);
+            terminalBody.scrollTop = terminalBody.scrollHeight;
+        }
+
+        // Web Bluetooth Connect Logic
+        connectBtn.addEventListener('click', async () => {
+            if (isConnected) {
+                disconnectBluetooth();
+            } else {
+                connectBluetooth();
+            }
+        });
+
+        async function connectBluetooth() {
+            try {
+                log('Requesting Bluetooth device...', 'normal');
+                bluetoothDevice = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: [NUS_SERVICE_UUID, '00001101-0000-1000-8000-00805f9b34fb']
+                });
+
+                log(`Connecting to ${bluetoothDevice.name || 'Rover'}...`, 'normal');
+                bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
+
+                gattServer = await bluetoothDevice.gatt.connect();
+                log('GATT Server connected.', 'rx');
+
+                // Try finding serial service
+                let service;
+                try {
+                    service = await gattServer.getPrimaryService(NUS_SERVICE_UUID);
+                    txCharacteristic = await service.getCharacteristic(NUS_RX_UUID);
+                    rxCharacteristic = await service.getCharacteristic(NUS_TX_UUID);
+                    
+                    await rxCharacteristic.startNotifications();
+                    rxCharacteristic.addEventListener('characteristicvaluechanged', handleIncomingData);
+                } catch (e) {
+                    log('Standard BLE UART not found, connected in control mode.', 'normal');
+                }
+
+                isConnected = true;
+                connectBtn.textContent = 'DISCONNECT';
+                connectBtn.classList.add('disconnect');
+                statusBadge.textContent = 'Connected';
+                statusBadge.classList.add('connected');
+                log('Rover connected successfully!', 'rx');
+
+            } catch (err) {
+                log(`Connection Failed: ${err.message}`, 'err');
+            }
+        }
+
+        function disconnectBluetooth() {
+            if (bluetoothDevice && bluetoothDevice.gatt.connected) {
+                bluetoothDevice.gatt.disconnect();
+            }
+            onDisconnected();
+        }
+
+        function onDisconnected() {
+            isConnected = false;
+            connectBtn.textContent = 'CONNECT';
+            connectBtn.classList.remove('disconnect');
+            statusBadge.textContent = 'Disconnected';
+            statusBadge.classList.remove('connected');
+            log('Bluetooth disconnected.', 'err');
+        }
+
+        // Transmit Command Over Bluetooth
+        async function sendCommand(cmd) {
+            log(`TX -> Command '${cmd}'`, 'tx');
+            stateVal.textContent = getCmdText(cmd);
+
+            if (navigator.vibrate) {
+                navigator.vibrate(30);
+            }
+
+            if (txCharacteristic && isConnected) {
+                try {
+                    const encoder = new TextEncoder();
+                    await txCharacteristic.writeValue(encoder.encode(cmd));
+                } catch (e) {
+                    log(`TX Error: ${e.message}`, 'err');
+                }
+            }
+        }
+
+        function getCmdText(cmd) {
+            switch(cmd) {
+                case 'F': return 'FORWARD';
+                case 'B': return 'REVERSE';
+                case 'L': return 'TURN LEFT';
+                case 'R': return 'TURN RIGHT';
+                case 'S': return 'STOPPED';
+                default: return cmd;
+            }
+        }
+
+        // Incoming Telemetry Parser
+        function handleIncomingData(event) {
+            const decoder = new TextDecoder('utf-8');
+            const text = decoder.decode(event.target.value).trim();
+            log(`RX <- ${text}`, 'rx');
+
+            if (text.includes("Temperature :")) {
+                tempVal.textContent = text.split(":")[1].trim();
+            } else if (text.includes("Humidity :")) {
+                humVal.textContent = text.split(":")[1].trim();
+            } else if (text.includes("MQ135 :")) {
+                const val = text.split(":")[1].trim();
+                mqVal.textContent = val;
+                const num = parseInt(val);
+                if (!isNaN(num)) {
+                    if (num < 300) { airRating.textContent = 'GOOD'; airRating.style.color = '#00E676'; }
+                    else if (num < 600) { airRating.textContent = 'MODERATE'; airRating.style.color = '#FFC400'; }
+                    else { airRating.textContent = 'POOR'; airRating.style.color = '#FF1744'; }
+                }
+            } else if (text.includes("Turbidity :")) {
+                turbVal.textContent = text.split(":")[1].trim();
+            } else if (text.includes("TDS :")) {
+                tdsVal.textContent = text.split(":")[1].trim();
+            }
+        }
+
+        // Setup Touch Hold-to-Move D-Pad Controls
+        function setupHoldButton(btnId, moveCmd) {
+            const btn = document.getElementById(btnId);
+            let active = false;
+
+            const startMove = (e) => {
+                e.preventDefault();
+                if (!active) {
+                    active = true;
+                    btn.classList.add('active');
+                    sendCommand(moveCmd);
+                }
+            };
+
+            const stopMove = (e) => {
+                e.preventDefault();
+                if (active) {
+                    active = false;
+                    btn.classList.remove('active');
+                    sendCommand('S');
+                }
+            };
+
+            // Touch events for Phone Screen
+            btn.addEventListener('touchstart', startMove, { passive: false });
+            btn.addEventListener('touchend', stopMove, { passive: false });
+            btn.addEventListener('touchcancel', stopMove, { passive: false });
+
+            // Mouse events for testing on desktop browser
+            btn.addEventListener('mousedown', startMove);
+            btn.addEventListener('mouseup', stopMove);
+            btn.addEventListener('mouseleave', stopMove);
+        }
+
+        setupHoldButton('btnUp', 'F');
+        setupHoldButton('btnLeft', 'L');
+        setupHoldButton('btnDown', 'B');
+        setupHoldButton('btnRight', 'R');
+
+        // Stop button
+        document.getElementById('btnStop').addEventListener('click', () => sendCommand('S'));
+
+        // Keyboard Controls for Desktop Browser testing
+        const activeKeys = new Set();
+        document.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+            if (activeKeys.has(key)) return;
+            activeKeys.add(key);
+
+            if (key === 'w' || key === 'arrowup') sendCommand('F');
+            else if (key === 's' || key === 'arrowdown') sendCommand('B');
+            else if (key === 'a' || key === 'arrowleft') sendCommand('L');
+            else if (key === 'd' || key === 'arrowright') sendCommand('R');
+            else if (key === ' ') sendCommand('S');
+        });
+
+        document.addEventListener('keyup', (e) => {
+            const key = e.key.toLowerCase();
+            activeKeys.delete(key);
+            if (['w', 's', 'a', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
+                if (activeKeys.size === 0) sendCommand('S');
+            }
+        });
+
+        // Register Service Worker for PWA install
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').catch(() => {});
+        }
+    </script>
+</body>
+</html>
