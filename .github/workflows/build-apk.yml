@@ -20,6 +20,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Install Android Build Tools 33.0.2
+        run: |
+          yes | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2" "platforms;android-33"
+
       - name: Install Cordova CLI
         run: npm install -g cordova@12.0.0
 
