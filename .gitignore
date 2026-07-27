@@ -1,3 +1,7 @@
 __pycache__/
 *.pyc
 .antigravityignore
+.gradle/
+android/.gradle/
+android/app/build/
+android/build/
