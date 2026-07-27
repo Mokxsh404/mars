@@ -11,17 +11,5 @@
     "ecosystem:cordova"
   ],
   "author": "Moksh",
-  "license": "Apache-2.0",
-  "dependencies": {
-    "cordova-android": "^12.0.1",
-    "cordova-plugin-bluetooth-serial": "^0.4.8"
-  },
-  "cordova": {
-    "plugins": {
-      "cordova-plugin-bluetooth-serial": {}
-    },
-    "platforms": [
-      "android"
-    ]
-  }
+  "license": "Apache-2.0"
 }
