@@ -24,12 +24,11 @@ jobs:
         run: npm install -g cordova@12.0.0
 
       - name: Build Android APK
-        env:
-          CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL: "https://services.gradle.org/distributions/gradle-8.4-bin.zip"
         run: |
           cd mobile_app
           cordova platform add android@12.0.1
           cordova plugin add https://github.com/don/BluetoothSerial.git
+          sed -i 's/new XmlParser/new groovy.xml.XmlParser/g' platforms/android/CordovaLib/cordova.gradle || true
           cordova build android --debug
 
       - name: Upload Android APK
