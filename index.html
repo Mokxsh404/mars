@@ -447,13 +447,67 @@
             log('Bluetooth disconnected.', 'err');
         }
 
-        // Transmit Command Over Bluetooth
+        let isBridgeMode = false;
+
+        // Auto-detect if served by bridge_server.py
+        async function checkBridgeMode() {
+            try {
+                const res = await fetch('/api/status');
+                if (res.ok) {
+                    const data = await res.json();
+                    isBridgeMode = true;
+                    statusBadge.textContent = data.connected ? 'HC-05 Connected' : 'Bridge Active';
+                    statusBadge.classList.add('connected');
+                    connectBtn.style.display = 'none'; // No need for Bluetooth popup in bridge mode
+                    log('Connected via WiFi Bridge Server to HC-05!', 'rx');
+                    startTelemetryPolling();
+                }
+            } catch (e) {
+                isBridgeMode = false;
+            }
+        }
+        checkBridgeMode();
+
+        function startTelemetryPolling() {
+            setInterval(async () => {
+                if (!isBridgeMode) return;
+                try {
+                    const res = await fetch('/api/telemetry');
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.temperature !== '--') tempVal.textContent = data.temperature + (data.temperature.includes('C') ? '' : ' °C');
+                        if (data.humidity !== '--') humVal.textContent = data.humidity + (data.humidity.includes('%') ? '' : ' %');
+                        if (data.mq135 !== '--') {
+                            mqVal.textContent = data.mq135;
+                            airRating.textContent = data.air_rating;
+                            if (data.air_rating === 'GOOD') airRating.style.color = '#00E676';
+                            else if (data.air_rating === 'MODERATE') airRating.style.color = '#FFC400';
+                            else airRating.style.color = '#FF1744';
+                        }
+                        if (data.turbidity !== '--') turbVal.textContent = data.turbidity;
+                        if (data.tds !== '--') tdsVal.textContent = data.tds;
+                        if (data.state) stateVal.textContent = data.state;
+                    }
+                } catch (e) {}
+            }, 800);
+        }
+
+        // Transmit Command Over Bluetooth or WiFi Bridge
         async function sendCommand(cmd) {
             log(`TX -> Command '${cmd}'`, 'tx');
             stateVal.textContent = getCmdText(cmd);
 
             if (navigator.vibrate) {
                 navigator.vibrate(30);
+            }
+
+            if (isBridgeMode) {
+                try {
+                    await fetch(`/api/cmd?c=${cmd}`);
+                } catch (e) {
+                    log(`Bridge TX Error: ${e.message}`, 'err');
+                }
+                return;
             }
 
             if (txCharacteristic && isConnected) {
