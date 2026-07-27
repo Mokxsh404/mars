@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-apk:
     name: Build Native Android APK for HC-05
@@ -35,8 +38,18 @@ jobs:
           sed -i 's/new XmlParser/new groovy.xml.XmlParser/g' platforms/android/CordovaLib/cordova.gradle || true
           cordova build android --debug
 
-      - name: Upload Android APK
+      - name: Prepare APK File
+        run: cp mobile_app/platforms/android/app/build/outputs/apk/debug/app-debug.apk ./MarsRover-HC05-Control.apk
+
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: MarsRover-HC05-Control.apk
-          path: mobile_app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          path: ./MarsRover-HC05-Control.apk
+
+      - name: Publish Direct Release APK Link
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: Mars Rover APK v1.0.0
+          files: ./MarsRover-HC05-Control.apk
