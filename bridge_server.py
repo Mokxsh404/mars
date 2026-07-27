@@ -178,12 +178,12 @@ def connect_serial_port(port, baud=9600):
         ser_conn = serial.Serial(port, baud, timeout=1)
         is_connected = True
         latest_telemetry["connected"] = True
-        print(f"✅ Bluetooth connected on {port} at {baud} baud.")
+        print(f"[OK] Bluetooth connected on {port} at {baud} baud.")
         rx_thread = threading.Thread(target=serial_reader_thread, daemon=True)
         rx_thread.start()
         return True
     except Exception as e:
-        print(f"❌ Could not open {port}: {e}")
+        print(f"[ERR] Could not open {port}: {e}")
         return False
 
 def auto_connect_bluetooth():
@@ -202,10 +202,10 @@ def start_server(port=8080):
     server = HTTPServer(('0.0.0.0', port), RoverBridgeHandler)
     
     print("\n" + "="*60)
-    print("🔴 MARS ROVER MOBILE PHONE BRIDGE SERVER ACTIVE")
+    print(" MARS ROVER MOBILE PHONE BRIDGE SERVER ACTIVE")
     print("="*60)
-    print(f"📱 OPEN THIS LINK ON YOUR PHONE CHROME BROWSER:")
-    print(f"👉   http://{local_ip}:{port}")
+    print(f" OPEN THIS LINK ON YOUR PHONE CHROME BROWSER:")
+    print(f" ->   http://{local_ip}:{port}")
     print("="*60 + "\n")
 
     auto_connect_bluetooth()
